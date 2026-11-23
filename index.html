@@ -202,8 +202,6 @@ summary{cursor:pointer;font-weight:700}
     <div class="grid" style="grid-template-columns:minmax(0,1fr)">
       <div class="card"><h2 class="h3">What the numbers say</h2><div id="findings"></div></div>
       <div class="card"><h2 class="h3">What it means for the campaign</h2><div class="implic" id="implic"></div></div>
-      <div class="card"><h2 class="h3">How far to trust it</h2><div id="limits"></div></div>
-      <details id="method"><summary>How the simulated data was made</summary><div id="methodbody" style="margin-top:12px"></div></details>
     </div>
   </section>
 
@@ -345,14 +343,6 @@ function renderAnalysis(){
    ['Aim at the undecided.','About a third say not sure. Show them the four rules and let them judge any candidate against them, which fits a campaign about standards more than about one person.'],
    ['Keep the hypothetical honest.','She has said she will not run. The campaign tests the appeal of her record and the four rules, and the pitch should say so.']
   ].map(i=>'<div><b>'+i[0]+'</b>'+i[1]+'</div>').join('');
-  $('limits').innerHTML='<p>If these were a random sample of '+N+' people, any single percentage would carry a margin of about ±'+moe.toFixed(1)+' points at 95% confidence. A campus survey is a convenience sample, so the real uncertainty is larger, and the results could not be generalised to all students, to football fans or to FIFA’s voters, who are the presidents of 211 federations. Question 3 follows a short context note that includes the criticisms and FIFA’s reply, so the Yes answers mean “would replace after reading this”, not a settled view. The comparisons above show associations and no causes.</p><p style="margin-top:10px"><b>Everything on this page is simulated.</b> Use it to practise the analysis and to show how results would look. Do not present it as evidence of what students think.</p>';
-  $('methodbody').innerHTML='<p>The data was produced by a script with a fixed random seed, so it is the same every time. Each of the '+N+' rows is one invented respondent. Question 1 was drawn first (25% know some cases, 45% vague, 30% nothing). The chance of knowing something about Klaveness depended on it (50%, 30% and 12%), and the facts a person knew depended on it too. Answers to question 3 depended on question 1 (yes: 70%, 50%, 33%), with a further 7 points moving from not sure to yes for respondents who knew her. These links were chosen to look plausible and are assumptions, not findings.</p><div class="tw" style="margin-top:12px"><table class="t"><thead><tr><th>Answer to Q1</th><th>Knows Klaveness</th><th>Yes to replacing</th><th>No</th><th>Not sure</th></tr></thead><tbody><tr><td>Know some cases</td><td>50%</td><td>70%</td><td>10%</td><td>20%</td></tr><tr><td>Heard something vague</td><td>30%</td><td>50%</td><td>14%</td><td>36%</td></tr><tr><td>Heard nothing</td><td>12%</td><td>33%</td><td>20%</td><td>47%</td></tr></tbody></table></div><p style="margin-top:12px">To use real answers, replace the ROWS list in the page with one row per respondent and everything above recalculates.</p><p style="margin-top:12px"><button class="btn ghost" id="copycsv">Copy the 242 rows as CSV</button> <span class="sub" id="copymsg"></span></p><textarea id="csvbox" readonly hidden style="width:100%;height:120px;margin-top:10px"></textarea>';
-  $('copycsv').addEventListener('click',()=>{
-    const csv='respondent,q1_heard_problems,q2_president_nff,q2_played_norway,q2_criticised_fifa,q2_none,q3_replace_infantino\n'+ROWS.map((r,i)=>[i+1,Q1S[r[0]],r[1]&1?1:0,r[1]&2?1:0,r[1]&4?1:0,r[1]&8?1:0,Q3[r[2]]].join(',')).join('\n');
-    const box=$('csvbox');box.value=csv;
-    const done=ok=>{$('copymsg').textContent=ok?'Copied.':'Select the text below and copy it.';if(!ok){box.hidden=false;box.select()}};
-    try{navigator.clipboard.writeText(csv).then(()=>done(true),()=>done(false))}catch(e){done(false)}
-  });
 }
 
 renderSurvey();renderFilters();renderResults();renderCross();renderAnalysis();
