@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+<title>FIFA Pulse Survey</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout concept: a matchday scoreboard on top, three tabs below (take it, read it, understand it). Cool blue-greys, Norway red used for "replace". */
+:root{
+  --bg:#EDF1F6; --surface:#FFFFFF; --ink:#0F2340; --muted:#4F6178; --line:#D5DDE8; --soft:#E4EAF2;
+  --board-bg:#0F2340; --board-fg:#F4F6FA; --board-dim:#9FB0C8;
+  --btn-bg:#0F2340; --btn-fg:#FFFFFF; --focus:#BA0C2F;
+  --yes:#BA0C2F; --no:#1F3E6B; --ns:#9AA8BB;
+  --q1a:#0F2340; --q1b:#4A6A94; --q1c:#A9BAD0;
+  --warn-bg:#FFF1D6; --warn-fg:#6B4400; --warn-line:#E8B75A;
+  --display:'Barlow Condensed','Arial Narrow',Arial,sans-serif;
+  --text:'Archivo',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#09121F; --surface:#11203A; --ink:#EAF0F8; --muted:#9DB0C8; --line:#243957; --soft:#182A47;
+    --board-bg:#0B1830; --board-fg:#F4F6FA; --board-dim:#8FA3BF;
+    --btn-bg:#EAF0F8; --btn-fg:#09121F; --focus:#F0506A;
+    --yes:#F0506A; --no:#7FA3D1; --ns:#6B7F9A;
+    --q1a:#A9C3E6; --q1b:#6D90BF; --q1c:#3A5880;
+    --warn-bg:#3A2C0F; --warn-fg:#F2D18A; --warn-line:#7A5A18;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#09121F; --surface:#11203A; --ink:#EAF0F8; --muted:#9DB0C8; --line:#243957; --soft:#182A47;
+  --board-bg:#0B1830; --board-fg:#F4F6FA; --board-dim:#8FA3BF;
+  --btn-bg:#EAF0F8; --btn-fg:#09121F; --focus:#F0506A;
+  --yes:#F0506A; --no:#7FA3D1; --ns:#6B7F9A;
+  --q1a:#A9C3E6; --q1b:#6D90BF; --q1c:#3A5880;
+  --warn-bg:#3A2C0F; --warn-fg:#F2D18A; --warn-line:#7A5A18;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--text);font-size:16px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:20px 56px}
+h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:.01em;line-height:1.05;margin:0;text-wrap:balance}
+p{margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* simulated-data ribbon */
+.ribbon{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;background:var(--warn-bg);color:var(--warn-fg);border:1px solid var(--warn-line);border-radius:6px;padding:10px 14px;font-size:14px}
+.ribbon b{letter-spacing:.08em;font-size:12px;text-transform:uppercase}
+
+/* header */
+.head{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:end;padding-block:28px 18px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--yes)}
+h1{font-size:clamp(44px,8vw,84px);margin-top:6px}
+.lede{color:var(--muted);max-width:56ch;margin-top:10px}
+.circle{width:clamp(72px,12vw,128px);height:auto;color:var(--ink);opacity:.9}
+
+/* tabs */
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);overflow-x:auto;margin-bottom:22px}
+.tab{appearance:none;background:none;border:0;border-bottom:4px solid transparent;margin-bottom:-2px;padding:12px 16px;font-weight:600;font-size:16px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--yes)}
+.tab:hover{color:var(--ink)}
+.panel[hidden]{display:none}
+
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:clamp(18px,3vw,28px)}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:820px){.g2,.g3{grid-template-columns:minmax(0,1fr)}}
+.h3{font-size:28px;margin-bottom:6px}
+.sub{color:var(--muted);font-size:14px}
+
+/* survey */
+.survey{max-width:720px;margin-inline:auto}
+.prog{display:flex;gap:6px;margin-bottom:18px}
+.prog i{flex:1;height:6px;border-radius:3px;background:var(--soft)}
+.prog i.on{background:var(--yes)}
+.qno{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.q{font-family:var(--display);font-size:clamp(30px,5vw,42px);line-height:1.08;margin:6px 0 16px;font-weight:700}
+.opts{display:grid;gap:10px;margin:0;padding:0;border:0}
+.opt{display:flex;gap:12px;align-items:center;border:2px solid var(--line);border-radius:8px;padding:14px 16px;cursor:pointer;background:var(--surface);min-height:56px}
+.opt:hover{border-color:var(--muted)}
+.opt input{width:20px;height:20px;accent-color:var(--yes);flex:none;margin:0}
+.opt:has(input:checked){border-color:var(--yes);background:var(--soft)}
+.ctx{background:var(--soft);border-left:6px solid var(--no);border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:18px;font-size:15px}
+.ctx b{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.nav{display:flex;justify-content:space-between;gap:12px;margin-top:20px}
+.btn{appearance:none;border:2px solid var(--btn-bg);background:var(--btn-bg);color:var(--btn-fg);border-radius:8px;padding:12px 22px;font-weight:700;cursor:pointer;min-height:48px}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.hint{font-size:14px;color:var(--muted);margin-top:10px}
+.cmp{display:grid;gap:12px;margin-top:14px}
+.cmp div{border-top:1px solid var(--line);padding-top:10px}
+.cmp b{font-family:var(--display);font-size:30px;color:var(--yes);margin-right:6px}
+
+/* scoreboard */
+.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--board-bg);color:var(--board-fg);border-radius:10px;overflow:hidden}
+.cell{padding:18px 20px;border-right:1px solid rgba(255,255,255,.12)}
+.cell:last-child{border-right:0}
+.cell .n{font-family:var(--display);font-weight:700;font-size:clamp(40px,6vw,64px);line-height:1}
+.cell .l{font-size:13px;color:var(--board-dim);margin-top:6px}
+@media(max-width:720px){.board{grid-template-columns:repeat(2,minmax(0,1fr))}.cell:nth-child(2){border-right:0}.cell:nth-child(-n+2){border-bottom:1px solid rgba(255,255,255,.12)}}
+
+/* filters */
+.filters{display:flex;flex-wrap:wrap;gap:14px 28px;margin:18px 0}
+.fg{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.fg>span{font-size:13px;font-weight:700;color:var(--muted);margin-right:4px}
+.chip{appearance:none;border:2px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--btn-bg);color:var(--btn-fg);border-color:var(--btn-bg)}
+.note{background:var(--warn-bg);color:var(--warn-fg);border:1px solid var(--warn-line);border-radius:6px;padding:8px 12px;font-size:14px;margin-bottom:14px}
+
+/* bar charts */
+.bars{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:14px}
+.bar{display:grid;grid-template-columns:minmax(120px,38%) minmax(0,1fr) 92px;gap:6px 14px;align-items:center}
+.bar .lbl{font-size:15px;line-height:1.25}
+.track{height:26px;background:var(--soft);border-radius:4px;overflow:hidden}
+.fill{height:100%;border-radius:4px;transition:width .45s ease;min-width:2px}
+.val{text-align:right;font-variant-numeric:tabular-nums}
+.val b{font-size:18px}
+.val span{display:block;font-size:12px;color:var(--muted);margin-top:-2px}
+@media(max-width:560px){.bar{grid-template-columns:minmax(0,1fr) 84px}.bar .lbl{grid-column:1/-1}}
+.c-yes{background:var(--yes)}.c-no{background:var(--no)}.c-ns{background:var(--ns)}
+.c-a{background:var(--q1a)}.c-b{background:var(--q1b)}.c-c{background:var(--q1c)}
+.c-k{background:var(--no)}
+
+/* stacked bars */
+.stack{display:grid;gap:12px;margin-top:14px}
+.srow{display:grid;grid-template-columns:minmax(110px,30%) minmax(0,1fr);gap:6px 14px;align-items:center}
+.sbar{display:flex;height:40px;border-radius:4px;overflow:hidden;background:var(--soft)}
+.sbar i{display:flex;align-items:center;justify-content:center;font-style:normal;font-size:13px;font-weight:700;color:#fff;min-width:0;transition:width .45s ease}
+.sbar i.c-ns{color:#0F2340}
+:root[data-theme="dark"] .sbar i.c-ns{color:#09121F}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .sbar i.c-ns{color:#09121F}}
+@media(max-width:560px){.srow{grid-template-columns:minmax(0,1fr)}}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted);margin-top:12px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+/* analysis */
+.find{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 18px;align-items:start;padding:18px 0;border-top:1px solid var(--line)}
+.find:first-of-type{border-top:0;padding-top:4px}
+.find .big{font-family:var(--display);font-weight:700;font-size:clamp(44px,7vw,68px);line-height:.95;color:var(--yes);min-width:2.6ch}
+.find h3{font-size:26px;margin-bottom:4px}
+.find p{color:var(--ink)}
+.find p.muted{color:var(--muted);font-size:14px;margin-top:6px}
+@media(max-width:560px){.find{grid-template-columns:minmax(0,1fr)}}
+.implic{display:grid;gap:14px;margin-top:10px}
+.implic div{padding-left:16px;border-left:5px solid var(--yes)}
+.implic b{display:block}
+table.t{border-collapse:collapse;width:100%;font-size:14px}
+.tw{overflow-x:auto}
+.t th,.t td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.t th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+details{border:1px solid var(--line);border-radius:8px;padding:12px 16px;background:var(--surface)}
+summary{cursor:pointer;font-weight:700}
+.foot{margin-top:28px;font-size:13px;color:var(--muted);max-width:80ch}
+@media (prefers-reduced-motion: reduce){.fill,.sbar i{transition:none}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div>
+      <p class="eyebrow">The FIFA We Deserve · student concept campaign</p>
+      <h1>FIFA Pulse Survey</h1>
+      <p class="lede">Three questions on FIFA's problems, Lise Klaveness and the 2031 election.</p>
+    </div>
+    <svg class="circle" viewBox="0 0 120 120" role="img" aria-label="A football centre circle with a halfway line and centre spot"><circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" stroke-width="4"/><line x1="60" y1="8" x2="60" y2="112" stroke="currentColor" stroke-width="4"/><circle cx="60" cy="60" r="7" fill="#BA0C2F"/></svg>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Survey sections">
+    <button class="tab" role="tab" id="t-take" aria-controls="p-take" aria-selected="true">Take the survey</button>
+    <button class="tab" role="tab" id="t-res" aria-controls="p-res" aria-selected="false">Results</button>
+    <button class="tab" role="tab" id="t-ana" aria-controls="p-ana" aria-selected="false">Analysis</button>
+  </div>
+
+  <section class="panel" id="p-take" role="tabpanel" aria-labelledby="t-take">
+    <div class="card survey" id="survey"></div>
+  </section>
+
+  <section class="panel" id="p-res" role="tabpanel" aria-labelledby="t-res" hidden>
+    <div class="board" id="board" aria-live="polite"></div>
+    <div class="filters" id="filters"></div>
+    <div id="smalln"></div>
+    <div class="grid g2">
+      <div class="card"><h2 class="h3">1. Heard about FIFA's problems?</h2><p class="sub">Before today, had you heard about corruption or governance problems at FIFA?</p><ul class="bars" id="c1"></ul></div>
+      <div class="card"><h2 class="h3">2. What they know about Klaveness</h2><p class="sub">Tick-all question, so bars add up to more than 100%.</p><ul class="bars" id="c2"></ul></div>
+    </div>
+    <div class="card" style="margin-top:18px"><h2 class="h3">3. Should Infantino be replaced in 2031?</h2><p class="sub">Asked after a short, balanced note on the election.</p><ul class="bars" id="c3"></ul></div>
+    <div class="grid g2" style="margin-top:18px">
+      <div class="card"><h2 class="h3">Replace Infantino? By awareness of FIFA's problems</h2><p class="sub">All 242 responses, filters do not apply.</p><div class="stack" id="x1"></div><div class="legend" id="lg1"></div></div>
+      <div class="card"><h2 class="h3">Replace Infantino? By knowing Klaveness</h2><p class="sub">All 242 responses, filters do not apply.</p><div class="stack" id="x2"></div><div class="legend" id="lg2"></div></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-ana" role="tabpanel" aria-labelledby="t-ana" hidden>
+    <div class="grid" style="grid-template-columns:minmax(0,1fr)">
+      <div class="card"><h2 class="h3">What the numbers say</h2><div id="findings"></div></div>
+      <div class="card"><h2 class="h3">What it means for the campaign</h2><div class="implic" id="implic"></div></div>
+      <div class="card"><h2 class="h3">How far to trust it</h2><div id="limits"></div></div>
+      <details id="method"><summary>How the simulated data was made</summary><div id="methodbody" style="margin-top:12px"></div></details>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* One row per simulated respondent: [Q1 answer, Q2 bitmask, Q3 answer]
+   Q1: 0 know some cases, 1 heard something vague, 2 nothing
+   Q2: 1 president of Norwegian FA, 2 played for Norway, 4 criticised FIFA, 8 none of these
+   Q3: 0 yes, 1 no, 2 not sure */
+const ROWS=[[0,7,2],[0,7,0],[1,8,0],[2,8,2],[1,7,0],[1,2,0],[2,8,2],[2,5,2],[1,8,2],[1,2,0],[0,5,0],[0,8,0],[1,1,0],[1,8,0],[2,8,0],[1,5,1],[1,5,2],[1,8,2],[1,8,2],[2,8,2],[0,8,0],[1,8,2],[1,8,2],[2,8,2],[0,5,0],[1,8,0],[1,5,0],[1,8,2],[1,5,0],[0,5,0],[1,8,2],[1,8,2],[0,8,2],[1,6,1],[0,1,0],[1,8,2],[1,8,0],[2,8,0],[1,8,0],[2,8,0],[1,4,0],[0,8,0],[1,8,0],[0,5,0],[1,8,1],[1,8,0],[0,8,0],[2,2,2],[1,8,1],[2,8,0],[1,8,0],[1,8,2],[2,8,1],[0,5,0],[1,8,2],[1,8,0],[1,8,1],[1,4,1],[0,8,2],[0,6,1],[1,8,2],[1,8,0],[1,8,0],[2,8,2],[0,5,0],[1,8,2],[1,8,2],[0,7,0],[0,8,0],[1,8,2],[0,4,0],[2,8,2],[1,8,2],[1,8,2],[2,8,1],[2,8,2],[2,8,2],[2,8,2],[2,8,1],[2,8,2],[1,1,2],[0,8,2],[2,8,1],[2,8,1],[1,5,0],[0,1,2],[1,8,0],[2,8,0],[1,6,2],[2,8,1],[1,8,1],[1,8,2],[2,8,1],[1,1,0],[1,7,1],[1,1,0],[2,1,0],[1,8,0],[1,8,2],[1,8,0],[2,8,2],[1,5,0],[2,8,0],[1,8,0],[1,8,2],[1,8,2],[0,1,2],[2,8,1],[0,8,2],[1,5,0],[2,8,0],[0,4,0],[2,8,0],[2,8,0],[0,1,0],[1,7,0],[2,5,0],[2,8,2],[1,8,0],[2,8,1],[1,8,0],[2,8,2],[1,8,1],[1,1,2],[0,5,0],[1,8,0],[0,1,0],[2,8,1],[1,8,2],[2,8,2],[1,8,2],[1,3,2],[1,5,0],[0,8,0],[0,8,0],[1,7,0],[0,8,1],[1,8,0],[1,8,0],[2,8,0],[1,8,0],[1,8,0],[2,8,1],[1,5,2],[1,6,0],[0,8,0],[1,8,1],[1,8,1],[0,8,2],[2,8,2],[0,8,0],[0,5,0],[1,3,0],[0,1,1],[1,8,0],[1,7,0],[1,8,0],[1,5,0],[1,8,0],[2,5,2],[2,8,2],[1,6,0],[2,3,2],[0,8,0],[1,8,1],[1,8,0],[0,8,0],[2,8,1],[0,5,0],[1,5,0],[0,8,2],[2,8,0],[2,8,0],[2,8,0],[2,8,1],[1,5,2],[1,3,0],[0,6,2],[0,1,0],[1,3,2],[1,8,2],[2,8,1],[1,8,0],[1,2,2],[0,8,0],[0,7,0],[2,3,0],[1,1,0],[0,8,0],[1,8,0],[1,5,2],[1,8,2],[0,8,0],[0,1,0],[1,5,0],[1,8,0],[0,2,0],[2,8,1],[2,8,1],[2,8,1],[0,8,0],[1,7,2],[1,8,0],[0,7,2],[2,8,0],[0,7,0],[0,4,0],[1,8,0],[2,8,2],[0,8,2],[2,8,1],[1,8,0],[1,5,2],[2,8,2],[1,8,1],[1,8,0],[1,8,2],[1,8,1],[1,8,2],[2,8,1],[2,8,2],[2,8,1],[0,7,0],[2,8,0],[2,8,2],[2,8,2],[2,8,2],[1,8,2],[2,8,2],[1,7,0],[0,1,0],[1,3,2],[1,8,0],[2,8,0],[0,5,0],[0,5,1],[2,8,2],[1,6,0],[1,8,1],[0,1,0],[2,8,2],[2,1,1]];
+const SEED=2027;
+const N=ROWS.length;
+const Q1=['Yes, I know some of the cases','I’ve heard something vague','No, nothing'];
+const Q1S=['Know some cases','Heard something vague','Heard nothing'];
+const Q2=[{bit:1,label:'She is president of the Norwegian Football Federation'},{bit:2,label:'She played for the Norway national team'},{bit:4,label:'She has publicly criticised FIFA'},{bit:8,label:'None of these, I don’t know her'}];
+const Q3=['Yes','No','Not sure'];
+const $=id=>document.getElementById(id);
+const pct=(a,b)=>b?100*a/b:0;
+const f1=x=>x.toFixed(1)+'%';
+const f0=x=>Math.round(x)+'%';
+const knows=r=>r[1]!==8;
+
+/* ---------- tabs ---------- */
+const tabs=['take','res','ana'];
+function showTab(k){
+  tabs.forEach(t=>{const on=t===k;$('t-'+t).setAttribute('aria-selected',on);$('p-'+t).hidden=!on});
+  try{history.replaceState(null,'','#'+k)}catch(e){}
+}
+tabs.forEach(t=>$('t-'+t).addEventListener('click',()=>showTab(t)));
+document.querySelector('.tabs').addEventListener('keydown',e=>{
+  const i=tabs.findIndex(t=>$('t-'+t).getAttribute('aria-selected')==='true');
+  if(e.key==='ArrowRight'||e.key==='ArrowLeft'){const j=(i+(e.key==='ArrowRight'?1:2))%3;showTab(tabs[j]);$('t-'+tabs[j]).focus()}
+});
+
+/* ---------- survey ---------- */
+let step=0;const ans={q1:null,q2:0,q3:null};
+function dots(){return '<div class="prog" aria-hidden="true">'+[0,1,2].map(i=>'<i class="'+(i<=Math.min(step,2)?'on':'')+'"></i>').join('')+'</div>'}
+function renderSurvey(){
+  const el=$('survey');
+  if(step===0){
+    el.innerHTML=dots()+'<p class="qno">Question 1 of 3</p><h2 class="q">Before today, had you heard about corruption or governance problems at FIFA?</h2><fieldset class="opts" style="border:0;padding:0;margin:0">'+Q1.map((o,i)=>'<label class="opt"><input type="radio" name="q1" value="'+i+'"'+(ans.q1===i?' checked':'')+'><span>'+o+'</span></label>').join('')+'</fieldset><div class="nav"><span></span><button class="btn" id="next" '+(ans.q1===null?'disabled':'')+'>Next</button></div>';
+  }else if(step===1){
+    el.innerHTML=dots()+'<p class="qno">Question 2 of 3</p><h2 class="q">What do you know about Lise Klaveness?</h2><p class="hint" style="margin:-6px 0 12px">Tick all that apply.</p><fieldset class="opts" style="border:0;padding:0;margin:0">'+Q2.map(o=>'<label class="opt"><input type="checkbox" name="q2" value="'+o.bit+'"'+((ans.q2&o.bit)?' checked':'')+'><span>'+o.label+'</span></label>').join('')+'</fieldset><div class="nav"><button class="btn ghost" id="back">Back</button><button class="btn" id="next" '+(ans.q2===0?'disabled':'')+'>Next</button></div>';
+  }else if(step===2){
+    el.innerHTML=dots()+'<p class="qno">Question 3 of 3</p><div class="ctx"><b>Some context</b>Gianni Infantino has been FIFA president since 2016. Critics, including the Norwegian FA, point to FIFA’s ticket prices, the treatment of workers in Qatar and its Peace Prize. FIFA says it has reformed and reinvests over 90% of its budget in football.</div><h2 class="q">Do you think Infantino should be replaced by someone else in the 2031 election?</h2><fieldset class="opts" style="border:0;padding:0;margin:0">'+Q3.map((o,i)=>'<label class="opt"><input type="radio" name="q3" value="'+i+'"'+(ans.q3===i?' checked':'')+'><span>'+o+'</span></label>').join('')+'</fieldset><div class="nav"><button class="btn ghost" id="back">Back</button><button class="btn" id="next" '+(ans.q3===null?'disabled':'')+'>See how you compare</button></div>';
+  }else{
+    const a1=pct(ROWS.filter(r=>r[0]===ans.q1).length,N),a3=pct(ROWS.filter(r=>r[2]===ans.q3).length,N);
+    const kn=pct(ROWS.filter(knows).length,N);
+    const youKnow=ans.q2!==8;
+    el.innerHTML='<p class="qno">Done</p><h2 class="q">Thanks. Here is how you compare.</h2><div class="cmp">'
+     +'<div><b>'+f0(a1)+'</b>gave the same answer as you on FIFA’s problems: “'+Q1[ans.q1]+'”.</div>'
+     +'<div><b>'+f0(youKnow?kn:100-kn)+'</b>'+(youKnow?'also knew at least one fact about Lise Klaveness.':'also did not know her.')+'</div>'
+     +'<div><b>'+f0(a3)+'</b>answered “'+Q3[ans.q3]+'” on replacing Infantino.</div></div>'
+     +'<div class="nav"><button class="btn ghost" id="again">Start again</button><button class="btn" id="see">See all results</button></div>';
+  }
+}
+$('survey').addEventListener('change',e=>{
+  const t=e.target;
+  if(t.name==='q1')ans.q1=+t.value;
+  if(t.name==='q3')ans.q3=+t.value;
+  if(t.name==='q2'){
+    const bit=+t.value;
+    if(t.checked){ans.q2=bit===8?8:((ans.q2&~8)|bit)}else{ans.q2&=~bit}
+    document.querySelectorAll('input[name=q2]').forEach(i=>{i.checked=!!(ans.q2&+i.value)});
+  }
+  const nx=$('next');if(nx)nx.disabled=(step===0&&ans.q1===null)||(step===1&&ans.q2===0)||(step===2&&ans.q3===null);
+});
+$('survey').addEventListener('click',e=>{
+  const id=e.target.id;
+  if(id==='next'){step++;renderSurvey();$('survey').scrollIntoView({block:'nearest'})}
+  if(id==='back'){step--;renderSurvey()}
+  if(id==='again'){step=0;ans.q1=null;ans.q2=0;ans.q3=null;renderSurvey()}
+  if(id==='see')showTab('res');
+});
+
+/* ---------- results ---------- */
+const F={a:'all',k:'all'};
+function filtered(){return ROWS.filter(r=>(F.a==='all'||r[0]===F.a)&&(F.k==='all'||(F.k==='yes')===knows(r)))}
+function chipRow(label,key,opts){return '<div class="fg" role="group" aria-label="'+label+'"><span>'+label+'</span>'+opts.map(o=>'<button class="chip" data-k="'+key+'" data-v="'+o[0]+'" aria-pressed="'+(String(F[key])===String(o[0]))+'">'+o[1]+'</button>').join('')+'</div>'}
+function renderFilters(){
+  $('filters').innerHTML=chipRow('FIFA problems','a',[['all','Everyone'],[0,'Know some cases'],[1,'Vague'],[2,'Nothing']])+chipRow('Klaveness','k',[['all','Everyone'],['yes','Knows her'],['no','Doesn’t know her']]);
+}
+$('filters').addEventListener('click',e=>{
+  const b=e.target.closest('.chip');if(!b)return;
+  F[b.dataset.k]=b.dataset.v==='all'||b.dataset.v==='yes'||b.dataset.v==='no'?b.dataset.v:+b.dataset.v;
+  renderFilters();renderResults();
+});
+function bar(label,cnt,tot,cls){const p=pct(cnt,tot);return '<li class="bar"><span class="lbl">'+label+'</span><div class="track" role="img" aria-label="'+label+': '+f1(p)+' ('+cnt+' of '+tot+')"><div class="fill '+cls+'" style="width:'+p+'%"></div></div><div class="val"><b>'+f1(p)+'</b><span>'+cnt+' of '+tot+'</span></div></li>'}
+function renderResults(){
+  const d=filtered(),n=d.length;
+  const aware=d.filter(r=>r[0]<2).length,kn=d.filter(knows).length,rep=d.filter(r=>r[2]===0).length;
+  const S=(v,l)=>'<div class="cell"><div class="n tnum">'+v+'</div><div class="l">'+l+'</div></div>';
+  $('board').innerHTML=S(n,'responses in this view')+S(n?f0(pct(aware,n)):'–','had heard about FIFA’s problems')+S(n?f0(pct(kn,n)):'–','know something about Klaveness')+S(n?f0(pct(rep,n)):'–','want Infantino replaced');
+  $('smalln').innerHTML=n<30?'<div class="note">Only '+n+' respondents match these filters. Read the percentages with care.</div>':'';
+  $('c1').innerHTML=[0,1,2].map(i=>bar(Q1[i],d.filter(r=>r[0]===i).length,n,['c-a','c-b','c-c'][i])).join('');
+  $('c2').innerHTML=Q2.map(o=>bar(o.label,d.filter(r=>r[1]&o.bit).length,n,o.bit===8?'c-ns':'c-k')).join('');
+  $('c3').innerHTML=[0,1,2].map(i=>bar(Q3[i],d.filter(r=>r[2]===i).length,n,['c-yes','c-no','c-ns'][i])).join('');
+}
+function stackRow(label,rows){
+  const n=rows.length,c=[0,1,2].map(i=>rows.filter(r=>r[2]===i).length);
+  return '<div class="srow"><div><b>'+label+'</b><div class="sub">n = '+n+'</div></div><div class="sbar" role="img" aria-label="'+label+': yes '+f0(pct(c[0],n))+', no '+f0(pct(c[1],n))+', not sure '+f0(pct(c[2],n))+'">'+c.map((v,i)=>'<i class="'+['c-yes','c-no','c-ns'][i]+'" style="width:'+pct(v,n)+'%">'+(pct(v,n)>=9?f0(pct(v,n)):'')+'</i>').join('')+'</div></div>';
+}
+function renderCross(){
+  $('x1').innerHTML=[0,1,2].map(i=>stackRow(Q1S[i],ROWS.filter(r=>r[0]===i))).join('');
+  $('x2').innerHTML=stackRow('Knows Klaveness',ROWS.filter(knows))+stackRow('Doesn’t know her',ROWS.filter(r=>!knows(r)));
+  const lg='<span><i class="c-yes"></i>Yes, replace</span><span><i class="c-no"></i>No</span><span><i class="c-ns"></i>Not sure</span>';
+  $('lg1').innerHTML=lg;$('lg2').innerHTML=lg;
+}
+
+/* ---------- analysis ---------- */
+function Phi(z){const t=1/(1+.2316419*Math.abs(z)),d=.3989423*Math.exp(-z*z/2);let p=d*t*(.3193815+t*(-.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return z>0?1-p:p}
+function twoProp(x1,n1,x2,n2){const p1=x1/n1,p2=x2/n2,p=(x1+x2)/(n1+n2),se=Math.sqrt(p*(1-p)*(1/n1+1/n2)),z=(p1-p2)/se,pv=2*(1-Phi(Math.abs(z)));return{z,pv}}
+const fp=p=>p<.001?'p < 0.001':'p = '+p.toFixed(3);
+function renderAnalysis(){
+  const yes=ROWS.filter(r=>r[2]===0).length,no=ROWS.filter(r=>r[2]===1).length,ns=ROWS.filter(r=>r[2]===2).length;
+  const kn=ROWS.filter(knows),nk=ROWS.filter(r=>!knows(r));
+  const g=i=>ROWS.filter(r=>r[0]===i);
+  const yRate=rs=>pct(rs.filter(r=>r[2]===0).length,rs.length);
+  const y0=yRate(g(0)),y1=yRate(g(1)),y2=yRate(g(2)),yk=yRate(kn),ynk=yRate(nk);
+  const t1=twoProp(g(0).filter(r=>r[2]===0).length,g(0).length,g(2).filter(r=>r[2]===0).length,g(2).length);
+  const t2=twoProp(kn.filter(r=>r[2]===0).length,kn.length,nk.filter(r=>r[2]===0).length,nk.length);
+  const nsRate=rs=>pct(rs.filter(r=>r[2]===2).length,rs.length);
+  const moe=1.96*Math.sqrt(.25/N)*100;
+  const fl=Q2.map(o=>ROWS.filter(r=>r[1]&o.bit).length);
+  const crit=pct(kn.filter(r=>r[1]&4).length,kn.length);
+  const nsRows=ROWS.filter(r=>r[2]===2),nsLow=pct(nsRows.filter(r=>r[0]>0).length,nsRows.length);
+  const F=[
+   [f0(pct(kn.length,N)),'Most students have never heard of her','Only '+kn.length+' of '+N+' respondents could pick out any fact about Lise Klaveness. '+f0(100-pct(kn.length,N))+' knew nothing. Among those who did, '+f0(crit)+' knew she has criticised FIFA publicly, so her reputation travels through her record more than through her title.','Recognition, not opinion, is the first obstacle for a campaign built around her.'],
+   [f0(pct(yes,N)),'About half want Infantino replaced','After the context note, '+yes+' respondents ('+f1(pct(yes,N))+') said yes, '+no+' ('+f1(pct(no,N))+') said no and '+ns+' ('+f1(pct(ns,N))+') were not sure. The yes group outnumbers the no group '+(yes/no).toFixed(1)+' to 1.','Appetite for change is real, and it is not yet attached to any name.'],
+   ['+'+Math.round(y0-y2),'Knowing the problems goes with wanting change','Among those who know some FIFA cases, '+f0(y0)+' want a replacement. Among those who have heard nothing, '+f0(y2)+' do ('+fp(t1.pv)+'). The vague group sits in between at '+f0(y1)+'.','A difference like this shows an association. It does not show that learning about the cases causes the answer.'],
+   ['+'+Math.round(yk-ynk),'Students who know her are more open to a change','Among those who know something about Klaveness, '+f0(yk)+' say yes, against '+f0(ynk)+' of those who do not ('+fp(t2.pv)+'). Not sure falls from '+f0(nsRate(nk))+' to '+f0(nsRate(kn))+'.','People who follow football governance both know her and want change, so this is not proof that she persuades.'],
+   [f0(nsLow),'Most undecided students know little about the problems','Of the '+ns+' respondents who are not sure, '+f0(nsLow)+' had only a vague idea of FIFA’s problems or none.','This suggests information, more than persuasion, could move them. The survey cannot show that.']
+  ];
+  $('findings').innerHTML=F.map(f=>'<div class="find"><div class="big tnum">'+f[0]+'</div><div><h3>'+f[1]+'</h3><p>'+f[2]+'</p><p class="muted">'+f[3]+'</p></div></div>').join('');
+  $('implic').innerHTML=[
+   ['Introduce her before you ask for support.','With '+f0(100-pct(kn.length,N))+' of students not knowing her, the first job is a clear, factual introduction: who she is, what she did in Doha, what her federation has filed.'],
+   ['Lead with the problem for the vague group.','The largest group ('+f0(pct(g(1).length,N))+') has heard something vague. Their answers lean towards change ('+f0(y1)+'), and a plain list of documented cases is the likeliest way to firm that up.'],
+   ['Aim at the undecided.','About a third say not sure. Show them the four rules and let them judge any candidate against them, which fits a campaign about standards more than about one person.'],
+   ['Keep the hypothetical honest.','She has said she will not run. The campaign tests the appeal of her record and the four rules, and the pitch should say so.']
+  ].map(i=>'<div><b>'+i[0]+'</b>'+i[1]+'</div>').join('');
+  $('limits').innerHTML='<p>If these were a random sample of '+N+' people, any single percentage would carry a margin of about ±'+moe.toFixed(1)+' points at 95% confidence. A campus survey is a convenience sample, so the real uncertainty is larger, and the results could not be generalised to all students, to football fans or to FIFA’s voters, who are the presidents of 211 federations. Question 3 follows a short context note that includes the criticisms and FIFA’s reply, so the Yes answers mean “would replace after reading this”, not a settled view. The comparisons above show associations and no causes.</p><p style="margin-top:10px"><b>Everything on this page is simulated.</b> Use it to practise the analysis and to show how results would look. Do not present it as evidence of what students think.</p>';
+  $('methodbody').innerHTML='<p>The data was produced by a script with a fixed random seed, so it is the same every time. Each of the '+N+' rows is one invented respondent. Question 1 was drawn first (25% know some cases, 45% vague, 30% nothing). The chance of knowing something about Klaveness depended on it (50%, 30% and 12%), and the facts a person knew depended on it too. Answers to question 3 depended on question 1 (yes: 70%, 50%, 33%), with a further 7 points moving from not sure to yes for respondents who knew her. These links were chosen to look plausible and are assumptions, not findings.</p><div class="tw" style="margin-top:12px"><table class="t"><thead><tr><th>Answer to Q1</th><th>Knows Klaveness</th><th>Yes to replacing</th><th>No</th><th>Not sure</th></tr></thead><tbody><tr><td>Know some cases</td><td>50%</td><td>70%</td><td>10%</td><td>20%</td></tr><tr><td>Heard something vague</td><td>30%</td><td>50%</td><td>14%</td><td>36%</td></tr><tr><td>Heard nothing</td><td>12%</td><td>33%</td><td>20%</td><td>47%</td></tr></tbody></table></div><p style="margin-top:12px">To use real answers, replace the ROWS list in the page with one row per respondent and everything above recalculates.</p><p style="margin-top:12px"><button class="btn ghost" id="copycsv">Copy the 242 rows as CSV</button> <span class="sub" id="copymsg"></span></p><textarea id="csvbox" readonly hidden style="width:100%;height:120px;margin-top:10px"></textarea>';
+  $('copycsv').addEventListener('click',()=>{
+    const csv='respondent,q1_heard_problems,q2_president_nff,q2_played_norway,q2_criticised_fifa,q2_none,q3_replace_infantino\n'+ROWS.map((r,i)=>[i+1,Q1S[r[0]],r[1]&1?1:0,r[1]&2?1:0,r[1]&4?1:0,r[1]&8?1:0,Q3[r[2]]].join(',')).join('\n');
+    const box=$('csvbox');box.value=csv;
+    const done=ok=>{$('copymsg').textContent=ok?'Copied.':'Select the text below and copy it.';if(!ok){box.hidden=false;box.select()}};
+    try{navigator.clipboard.writeText(csv).then(()=>done(true),()=>done(false))}catch(e){done(false)}
+  });
+}
+
+renderSurvey();renderFilters();renderResults();renderCross();renderAnalysis();
+const h=(location.hash||'').slice(1);if(tabs.includes(h))showTab(h);
+</script>
+
+</body>
+</html>
